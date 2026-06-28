@@ -1,0 +1,1275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>選科指南 · Elective Compass — HK S3 Subject Chooser</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#FFFBF2;
+    --ink:#1A1A2E;
+    --red:#E8543E;
+    --green:#3B7A57;
+    --gold:#B8902E;
+    --grey:#8B8B8B;
+    --line: rgba(26,26,46,0.12);
+    --font-display:'Space Grotesk', sans-serif;
+    --font-body:'Inter', sans-serif;
+    --font-mono:'JetBrains Mono', monospace;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--paper);
+    color:var(--ink);
+    font-family:var(--font-body);
+    line-height:1.5;
+    -webkit-font-smoothing:antialiased;
+  }
+  @media (prefers-reduced-motion: reduce){
+    *{animation-duration:0.001ms !important; transition-duration:0.001ms !important;}
+  }
+
+  /* ---------- Page shell: report-card sheet ---------- */
+  .sheet{
+    max-width:920px;
+    margin:0 auto;
+    min-height:100vh;
+    background:var(--paper);
+    position:relative;
+    border-left:3px solid var(--red);
+    padding:0 0 80px 0;
+  }
+  .sheet::before{
+    /* faint ruled lines, like exercise paper */
+    content:"";
+    position:absolute;
+    top:0; left:0; right:0; bottom:0;
+    background-image: repeating-linear-gradient(
+      to bottom,
+      transparent 0,
+      transparent 38px,
+      var(--line) 38px,
+      var(--line) 39px
+    );
+    opacity:0.5;
+    pointer-events:none;
+    z-index:0;
+  }
+  .sheet-inner{
+    position:relative;
+    z-index:1;
+    padding:36px 44px 0 56px;
+  }
+  @media (max-width:640px){
+    .sheet-inner{ padding:24px 20px 0 32px; }
+    .sheet{ border-left-width:2px; }
+  }
+
+  header.top{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+    border-bottom:2px solid var(--ink);
+    padding-bottom:18px;
+    margin-bottom:8px;
+    gap:16px;
+    flex-wrap:wrap;
+  }
+  .brand{
+    font-family:var(--font-display);
+    font-weight:700;
+    font-size:22px;
+    letter-spacing:-0.01em;
+  }
+  .brand .cn{ font-size:15px; color:var(--grey); font-weight:500; display:block; margin-top:2px; font-family:var(--font-body);}
+  .stamp-box{
+    font-family:var(--font-mono);
+    font-size:11px;
+    color:var(--grey);
+    text-align:right;
+    border:1.5px solid var(--ink);
+    padding:6px 10px;
+    transform:rotate(-1.5deg);
+  }
+  .stamp-box b{ color:var(--ink); display:block; font-size:13px; }
+
+  /* ---------- Progress: stamped subject stack ---------- */
+  .progress-rail{
+    display:flex;
+    gap:6px;
+    margin:22px 0 30px 0;
+    flex-wrap:wrap;
+  }
+  .progress-dot{
+    font-family:var(--font-mono);
+    font-size:11px;
+    padding:5px 10px;
+    border:1.5px solid var(--line);
+    color:var(--grey);
+    border-radius:2px;
+    transition:all .25s ease;
+  }
+  .progress-dot.active{
+    border-color:var(--red);
+    color:var(--red);
+    font-weight:700;
+  }
+  .progress-dot.done{
+    border-color:var(--green);
+    color:var(--green);
+  }
+
+  /* ---------- Step panels ---------- */
+  .step{ display:none; animation:fadeIn .35s ease; }
+  .step.active{ display:block; }
+  @keyframes fadeIn{ from{opacity:0; transform:translateY(6px);} to{opacity:1; transform:translateY(0);} }
+
+  .step-eyebrow{
+    font-family:var(--font-mono);
+    font-size:12px;
+    color:var(--red);
+    text-transform:uppercase;
+    letter-spacing:.08em;
+    margin-bottom:6px;
+  }
+  h1.step-title{
+    font-family:var(--font-display);
+    font-size:clamp(24px,4vw,34px);
+    font-weight:700;
+    margin:0 0 6px 0;
+    letter-spacing:-0.01em;
+  }
+  p.step-sub{
+    color:var(--grey);
+    margin:0 0 28px 0;
+    font-size:15px;
+    max-width:540px;
+  }
+
+  /* ---------- Welcome ---------- */
+  .welcome-hero{
+    padding:20px 0 10px 0;
+  }
+  .welcome-hero h1{
+    font-family:var(--font-display);
+    font-size:clamp(32px,6vw,52px);
+    line-height:1.05;
+    font-weight:700;
+    margin:0 0 16px 0;
+    letter-spacing:-0.02em;
+  }
+  .welcome-hero .accent{ color:var(--red); }
+  .welcome-hero p{
+    font-size:16px;
+    color:#3a3a4a;
+    max-width:520px;
+    margin-bottom:28px;
+  }
+  .disclaimer-box{
+    border:1.5px dashed var(--line);
+    padding:14px 16px;
+    font-size:13px;
+    color:var(--grey);
+    margin:22px 0 30px 0;
+    max-width:560px;
+    border-radius:2px;
+  }
+  .disclaimer-box b{ color:var(--ink); }
+
+  /* ---------- Buttons ---------- */
+  .btn{
+    font-family:var(--font-display);
+    font-weight:600;
+    font-size:15px;
+    padding:13px 26px;
+    border:2px solid var(--ink);
+    background:var(--ink);
+    color:var(--paper);
+    cursor:pointer;
+    border-radius:2px;
+    transition:transform .15s ease, box-shadow .15s ease;
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+  }
+  .btn:hover{ transform:translate(-2px,-2px); box-shadow:3px 3px 0 var(--red); }
+  .btn:focus-visible{ outline:3px solid var(--red); outline-offset:2px; }
+  .btn.secondary{
+    background:transparent;
+    color:var(--ink);
+    border-color:var(--line);
+  }
+  .btn.secondary:hover{ box-shadow:3px 3px 0 var(--line); border-color:var(--ink); }
+  .btn:disabled{ opacity:.4; cursor:not-allowed; transform:none; box-shadow:none; }
+  .btn-row{ display:flex; gap:12px; margin-top:36px; flex-wrap:wrap; }
+
+  /* ---------- Grade input grid ---------- */
+  .grade-grid{
+    display:grid;
+    grid-template-columns:1fr auto;
+    gap:10px 18px;
+    margin-bottom:8px;
+  }
+  .grade-row{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:12px 0;
+    border-bottom:1px solid var(--line);
+    grid-column:1 / -1;
+  }
+  .grade-row label{
+    font-family:var(--font-display);
+    font-weight:500;
+    font-size:15px;
+  }
+  .grade-row .cn-label{ color:var(--grey); font-size:12px; font-family:var(--font-body); margin-top:2px; }
+  select.grade-select{
+    font-family:var(--font-mono);
+    font-size:15px;
+    font-weight:700;
+    padding:8px 10px;
+    border:1.5px solid var(--ink);
+    background:var(--paper);
+    border-radius:2px;
+    min-width:70px;
+    text-align:center;
+  }
+
+  /* ---------- Quiz questions (personality / interest) ---------- */
+  .quiz-card{
+    border:1.5px solid var(--line);
+    padding:24px;
+    border-radius:2px;
+    margin-bottom:18px;
+    background:rgba(255,255,255,0.4);
+  }
+  .quiz-q{
+    font-family:var(--font-display);
+    font-weight:600;
+    font-size:17px;
+    margin-bottom:18px;
+    line-height:1.4;
+  }
+  .quiz-q .qnum{ color:var(--red); font-family:var(--font-mono); margin-right:8px; }
+  .option-list{ display:flex; flex-direction:column; gap:10px; }
+  .option-item{
+    display:flex;
+    align-items:flex-start;
+    gap:12px;
+    padding:13px 14px;
+    border:1.5px solid var(--line);
+    border-radius:2px;
+    cursor:pointer;
+    transition:all .15s ease;
+  }
+  .option-item:hover{ border-color:var(--ink); background:rgba(232,84,62,0.03); }
+  .option-item.selected{
+    border-color:var(--red);
+    background:rgba(232,84,62,0.06);
+  }
+  .option-item input{ margin-top:3px; accent-color:var(--red); cursor:pointer; }
+  .option-item .opt-text{ font-size:14.5px; }
+  .option-item .opt-sub{ font-size:12.5px; color:var(--grey); margin-top:2px; }
+
+  /* ---------- Results ---------- */
+  .results-summary{
+    border:2px solid var(--ink);
+    padding:24px;
+    margin-bottom:30px;
+    position:relative;
+    background:rgba(255,255,255,0.5);
+  }
+  .results-summary .stamp{
+    position:absolute;
+    top:-14px; right:18px;
+    background:var(--paper);
+    padding:2px 10px;
+    font-family:var(--font-mono);
+    font-size:11px;
+    color:var(--grey);
+    border:1px solid var(--line);
+  }
+  .mbti-pill{
+    display:inline-block;
+    font-family:var(--font-mono);
+    font-weight:700;
+    font-size:13px;
+    background:var(--ink);
+    color:var(--paper);
+    padding:4px 10px;
+    border-radius:2px;
+    margin-bottom:10px;
+    letter-spacing:.05em;
+  }
+  .results-summary h2{
+    font-family:var(--font-display);
+    font-size:20px;
+    margin:6px 0 10px 0;
+  }
+  .results-summary p{ font-size:14.5px; color:#3a3a4a; margin:0; }
+
+  /* subject rank tiles (timetable-stamp signature element) */
+  .tile-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fill, minmax(240px,1fr));
+    gap:14px;
+    margin-bottom:36px;
+  }
+  .subject-tile{
+    border:1.5px solid var(--ink);
+    padding:16px 16px 14px 16px;
+    position:relative;
+    background:var(--paper);
+    overflow:hidden;
+  }
+  .subject-tile::after{
+    content:attr(data-rank);
+    position:absolute;
+    top:8px; right:10px;
+    font-family:var(--font-mono);
+    font-size:11px;
+    color:var(--line);
+  }
+  .subject-tile .s-name{
+    font-family:var(--font-display);
+    font-weight:700;
+    font-size:16px;
+    margin-bottom:2px;
+  }
+  .subject-tile .s-name-cn{ font-size:12px; color:var(--grey); margin-bottom:12px; }
+  .subject-tile .s-score-bar{
+    height:6px;
+    background:var(--line);
+    border-radius:3px;
+    overflow:hidden;
+    margin-bottom:10px;
+  }
+  .subject-tile .s-score-fill{
+    height:100%;
+    border-radius:3px;
+    transition:width 1s ease;
+  }
+  .verdict{
+    display:inline-block;
+    font-family:var(--font-mono);
+    font-size:11px;
+    font-weight:700;
+    padding:3px 8px;
+    border-radius:2px;
+    letter-spacing:.04em;
+    transform:rotate(-2deg);
+  }
+  .verdict.good{ background:rgba(59,122,87,0.12); color:var(--green); border:1.5px solid var(--green); }
+  .verdict.consider{ background:rgba(184,144,46,0.12); color:var(--gold); border:1.5px solid var(--gold); }
+  .verdict.skip{ background:rgba(139,139,139,0.1); color:var(--grey); border:1.5px solid var(--grey); }
+  .subject-tile .s-reason{ font-size:12.5px; color:#444; margin-top:10px; line-height:1.45; }
+
+  /* radar chart container */
+  .chart-section{
+    border:1.5px solid var(--line);
+    padding:24px;
+    margin-bottom:36px;
+  }
+  .chart-section h3{
+    font-family:var(--font-display);
+    font-size:16px;
+    margin:0 0 4px 0;
+  }
+  .chart-section .chart-sub{ font-size:13px; color:var(--grey); margin-bottom:18px; }
+  #radarChart{ width:100%; max-width:380px; height:auto; display:block; margin:0 auto; }
+
+  .legend-row{ display:flex; gap:18px; flex-wrap:wrap; margin-top:16px; font-size:12px; color:var(--grey); }
+  .legend-row span{ display:inline-flex; align-items:center; gap:6px; }
+  .legend-dot{ width:10px; height:10px; border-radius:50%; display:inline-block; }
+
+  footer.page-foot{
+    margin-top:50px;
+    padding-top:18px;
+    border-top:1px solid var(--line);
+    font-size:12px;
+    color:var(--grey);
+    display:flex;
+    justify-content:space-between;
+    flex-wrap:wrap;
+    gap:10px;
+  }
+
+  .sr-only{
+    position:absolute; width:1px; height:1px; overflow:hidden;
+    clip:rect(0,0,0,0); white-space:nowrap;
+  }
+
+  .required-flag{
+    font-size:12px;
+    color:var(--red);
+    font-family:var(--font-mono);
+    margin-top:10px;
+    display:none;
+  }
+  .required-flag.show{ display:block; }
+</style>
+</head>
+<body>
+
+<div class="sheet">
+  <div class="sheet-inner">
+
+    <header class="top">
+      <div class="brand">
+        Elective Compass
+        <span class="cn">選科指南 — DSE 選修科建議系統</span>
+      </div>
+      <div class="stamp-box">
+        FORM 3 / 中三<br>
+        <b id="dateStamp">—</b>
+      </div>
+    </header>
+
+    <div class="progress-rail" id="progressRail"></div>
+
+    <!-- STEP 0: WELCOME -->
+    <section class="step active" id="step-welcome" data-step="0">
+      <div class="welcome-hero">
+        <h1>Pick your electives<br><span class="accent">like you mean it.</span></h1>
+        <p class="cn-line" style="font-family:var(--font-display); font-weight:600; font-size:18px; color:var(--ink); margin-top:-6px;">認真選擇你的選修科。</p>
+        <p>Three short sections — your <b>results</b>, how you <b>think</b>, and what you actually <b>enjoy</b> — combine into a subject shortlist built for the HKDSE elective system. Takes about 6 minutes.</p>
+        <p style="color:var(--grey); font-size:14px; margin-top:-18px;">三個簡短部分 — 你的<b>成績</b>、你的<b>思考方式</b>，以及你真正<b>感興趣</b>的事物 — 結合成一份配合 HKDSE 選修制度的選科建議。大約需要 6 分鐘。</p>
+        <div class="disclaimer-box">
+          <b>Before you start:</b> the personality section is loosely based on MBTI-style questions. It's a fun way to reflect on how you work and think — not a scientific predictor of what subject you'll succeed in. Treat it as one signal among several, not the answer. Your actual results and genuine interest matter more.
+          <div style="margin-top:8px; padding-top:8px; border-top:1px solid var(--line);"><b>開始之前：</b>性格部分參考 MBTI 形式的問題，是反思自己思考及行事方式的有趣方法 — 並非科學化的學業表現預測工具。請將它視為眾多參考之一，而非絕對答案。你的實際成績和真實興趣更為重要。</div>
+        </div>
+        <button class="btn" onclick="goToStep(1)">Start → 開始</button>
+      </div>
+    </section>
+
+    <!-- STEP 1: GRADES -->
+    <section class="step" id="step-grades" data-step="1">
+      <div class="step-eyebrow">Section 1 / 3 · 第一部分</div>
+      <h1 class="step-title">Your results so far</h1>
+      <p style="font-family:var(--font-display); font-weight:600; font-size:16px; margin:-2px 0 14px 0;">你目前的成績</p>
+      <p class="step-sub">Use your most recent school exam grades (S2 final or S3 first term). Estimate if you need to — this just shapes the starting point.<br><span style="color:var(--grey);">請填寫你最近的校內考試成績（中二期終考或中三第一學期）。如不確定，可以估算 — 這只是建議的起點。</span></p>
+
+      <div class="grade-grid" id="gradeGrid"></div>
+      <button class="btn secondary" id="addSubjectBtn" type="button" onclick="addCustomSubjectRow()" style="margin-top:14px; font-size:13px; padding:9px 18px;">+ Add another subject · 新增科目</button>
+      <div class="required-flag" id="gradeFlag">Please grade every subject before continuing. 請為所有科目填寫成績後再繼續。</div>
+
+      <div class="btn-row">
+        <button class="btn secondary" onclick="goToStep(0)">← Back · 返回</button>
+        <button class="btn" onclick="validateAndGo(1,2)">Continue · 繼續 →</button>
+      </div>
+    </section>
+
+    <!-- STEP 2: PERSONALITY (MBTI-lite) -->
+    <section class="step" id="step-personality" data-step="2">
+      <div class="step-eyebrow">Section 2 / 3 · 第二部分</div>
+      <h1 class="step-title">How your mind works</h1>
+      <p style="font-family:var(--font-display); font-weight:600; font-size:16px; margin:-2px 0 14px 0;">你的思考方式</p>
+      <p class="step-sub">Pick the option that feels more like you — there's no wrong answer, and it's fine if neither feels perfect. Go with your gut.<br><span style="color:var(--grey);">選擇較貼近你的選項 — 沒有對錯，即使兩者都不完全貼切也沒關係，跟隨直覺作答即可。</span></p>
+
+      <div id="personalityQuizArea"></div>
+      <div class="required-flag" id="personalityFlag">Please answer every question before continuing. 請回答所有問題後再繼續。</div>
+
+      <div class="btn-row">
+        <button class="btn secondary" onclick="goToStep(1)">← Back · 返回</button>
+        <button class="btn" onclick="validateAndGo(2,3)">Continue · 繼續 →</button>
+      </div>
+    </section>
+
+    <!-- STEP 3: INTERESTS -->
+    <section class="step" id="step-interest" data-step="3">
+      <div class="step-eyebrow">Section 3 / 3 · 第三部分</div>
+      <h1 class="step-title">What pulls your attention</h1>
+      <p style="font-family:var(--font-display); font-weight:600; font-size:16px; margin:-2px 0 14px 0;">真正吸引你的事物</p>
+      <p class="step-sub">Select all the activities that genuinely sound enjoyable to you — not just things you're "supposed" to like.<br><span style="color:var(--grey);">請選擇所有你真心感興趣的活動 — 不只是「應該」喜歡的東西。</span></p>
+
+      <div id="interestQuizArea"></div>
+      <div class="required-flag" id="interestFlag">Please select at least one option per question. 請為每個問題選擇至少一個選項。</div>
+
+      <div class="btn-row">
+        <button class="btn secondary" onclick="goToStep(2)">← Back · 返回</button>
+        <button class="btn" onclick="validateAndGo(3,4)">See my results · 查看結果 →</button>
+      </div>
+    </section>
+
+    <!-- STEP 4: RESULTS -->
+    <section class="step" id="step-results" data-step="4">
+      <div class="step-eyebrow">Your Report · 你的報告</div>
+      <h1 class="step-title">Here's your subject shortlist</h1>
+      <p style="font-family:var(--font-display); font-weight:600; font-size:16px; margin:-2px 0 14px 0;">你的選修科建議名單</p>
+      <p class="step-sub">Ranked by fit across your grades, thinking style, and genuine interests. Read the reasoning, not just the rank.<br><span style="color:var(--grey);">根據你的成績、思考方式及真實興趣排列。請閱讀背後原因，而非只看排名。</span></p>
+
+      <div class="results-summary" id="resultsSummary">
+        <div class="stamp" id="resultStampDate">—</div>
+      </div>
+
+      <div class="chart-section">
+        <h3>Fit across subject areas · 各科目適合程度</h3>
+        <div class="chart-sub">Each axis blends your grade, personality signal, and interest score (0–100).<br>每條軸線結合你的成績、性格參考及興趣分數（0–100）。</div>
+        <svg id="radarChart" viewBox="0 0 560 560" xmlns="http://www.w3.org/2000/svg"></svg>
+        <div class="legend-row" id="radarLegend"></div>
+      </div>
+
+      <div class="tile-grid" id="tileGrid"></div>
+
+      <div class="btn-row">
+        <button class="btn secondary" onclick="restartQuiz()">↺ Start over · 重新開始</button>
+        <button class="btn" onclick="window.print()">Print / Save report · 列印 / 儲存報告</button>
+      </div>
+    </section>
+
+    <footer class="page-foot">
+      <span>Elective Compass — a self-reflection tool, not official DSE/JUPAS advice. 本工具只供自我反思參考，並非官方 DSE / JUPAS 升學意見。</span>
+      <span id="footStep">Step 1 of 5</span>
+    </footer>
+
+  </div>
+</div>
+
+<script>
+/* =========================================================
+   DATA MODEL
+   ========================================================= */
+
+// ---- HKDSE Category A electives this tool covers ----
+const SUBJECTS = [
+  { id:'phy', name:'Physics', cn:'物理', cluster:'science', color:'#3B7A57' },
+  { id:'chem', name:'Chemistry', cn:'化學', cluster:'science', color:'#3B7A57' },
+  { id:'bio', name:'Biology', cn:'生物', cluster:'science', color:'#3B7A57' },
+  { id:'econ', name:'Economics', cn:'經濟', cluster:'business', color:'#B8902E' },
+  { id:'bafs', name:'BAFS', cn:'企會財', cluster:'business', color:'#B8902E' },
+  { id:'geog', name:'Geography', cn:'地理', cluster:'humanities', color:'#E8543E' },
+  { id:'hist', name:'History', cn:'歷史', cluster:'humanities', color:'#E8543E' },
+  { id:'chist', name:'Chinese History', cn:'中國歷史', cluster:'humanities', color:'#E8543E' },
+  { id:'ict', name:'ICT', cn:'資訊及通訊科技', cluster:'tech', color:'#1A1A2E' },
+  { id:'visarts', name:'Visual Arts', cn:'視覺藝術', cluster:'creative', color:'#8B5FBF' },
+  { id:'music', name:'Music', cn:'音樂', cluster:'creative', color:'#8B5FBF' },
+  { id:'pe', name:'PE', cn:'體育', cluster:'creative', color:'#8B5FBF' },
+  { id:'litcn', name:'Chinese Literature', cn:'中國文學', cluster:'language', color:'#2E6F8E' },
+  { id:'litex', name:'English Literature', cn:'英語文學', cluster:'language', color:'#2E6F8E' },
+];
+
+// ---- Grade -> base score lookup (HK 1-7 / 5** style scale, simplified to letter bands students recognize from school reports) ----
+const GRADE_OPTIONS = ['A','B','C','D','E','U/Not taken'];
+const GRADE_OPTIONS_CN = { 'A':'A','B':'B','C':'C','D':'D','E':'E','U/Not taken':'U / 未修讀' };
+const GRADE_SCORE = { 'A':100, 'B':85, 'C':70, 'D':55, 'E':40, 'U/Not taken':30 };
+
+// Preset subjects feeding the grade engine, mapped to which DSE electives they predict.
+// Covers core subjects + the most common subjects S3 students already take or taster.
+const GRADE_INPUTS = [
+  { id:'g_math', label:'Mathematics', cn:'數學', feeds:{phy:0.9,chem:0.6,bio:0.3,econ:0.7,bafs:0.8,ict:0.9,geog:0.3} },
+  { id:'g_sci', label:'Integrated Science', cn:'綜合科學', feeds:{phy:0.8,chem:0.9,bio:0.9,geog:0.3} },
+  { id:'g_eng', label:'English Language', cn:'英語', feeds:{litex:0.9,hist:0.4,geog:0.3,econ:0.3,bafs:0.3} },
+  { id:'g_chi', label:'Chinese Language', cn:'中文', feeds:{litcn:0.9,chist:0.6,hist:0.3} },
+  { id:'g_geog', label:'Geography (junior)', cn:'地理(初中)', feeds:{geog:0.95,econ:0.3} },
+  { id:'g_hist', label:'History (junior)', cn:'歷史(初中)', feeds:{hist:0.9,chist:0.5} },
+  { id:'g_art', label:'Visual Arts (junior)', cn:'視覺藝術(初中)', feeds:{visarts:0.95,music:0.3} },
+  { id:'g_compsci', label:'Computer Literacy / ICT', cn:'電腦 / 資訊及通訊科技', feeds:{ict:0.95,phy:0.2} },
+  { id:'g_econ', label:'Economics', cn:'經濟', feeds:{econ:0.95,bafs:0.5} },
+  { id:'g_bafs', label:'BAFS', cn:'企業、會計與財務概論', feeds:{bafs:0.95,econ:0.4} },
+  { id:'g_ls', label:'Liberal Studies / Citizenship', cn:'通識 / 公民與社會發展', feeds:{hist:0.4,geog:0.4,econ:0.3,chist:0.2} },
+  { id:'g_music', label:'Music (junior)', cn:'音樂(初中)', feeds:{music:0.95,visarts:0.2} },
+  { id:'g_pe', label:'Physical Education', cn:'體育', feeds:{pe:0.95} },
+];
+
+// ---- Keyword routing for free-text custom subjects ----
+// If a student types a subject we don't already have a preset for, we softly match
+// it against this dictionary so it can still contribute to the relevant elective(s).
+// No match found = the subject is recorded and shown, but contributes 0 to scoring
+// (safer than guessing wrong).
+const CUSTOM_SUBJECT_KEYWORDS = [
+  { pattern:/phys/i, feeds:{phy:0.9} },
+  { pattern:/chem/i, feeds:{chem:0.9} },
+  { pattern:/bio/i, feeds:{bio:0.9} },
+  { pattern:/econ/i, feeds:{econ:0.9,bafs:0.4} },
+  { pattern:/bafs|account|business/i, feeds:{bafs:0.9,econ:0.4} },
+  { pattern:/geog/i, feeds:{geog:0.9} },
+  { pattern:/chinese hist|中史|中國歷史/i, feeds:{chist:0.9,hist:0.3} },
+  { pattern:/hist/i, feeds:{hist:0.9,chist:0.3} },
+  { pattern:/ict|comput|info/i, feeds:{ict:0.9} },
+  { pattern:/art|visual/i, feeds:{visarts:0.9} },
+  { pattern:/music/i, feeds:{music:0.9} },
+  { pattern:/(^|\s)pe(\s|$)|physical ed|sport/i, feeds:{pe:0.9} },
+  { pattern:/chinese lit|中國文學/i, feeds:{litcn:0.9} },
+  { pattern:/english lit/i, feeds:{litex:0.9} },
+  { pattern:/math/i, feeds:{phy:0.6,econ:0.5,bafs:0.5,ict:0.6} },
+  { pattern:/science/i, feeds:{phy:0.5,chem:0.5,bio:0.5} },
+];
+function matchCustomSubjectFeeds(typedName){
+  if(!typedName) return null;
+  for(const entry of CUSTOM_SUBJECT_KEYWORDS){
+    if(entry.pattern.test(typedName)) return entry.feeds;
+  }
+  return null;
+}
+
+/* =========================================================
+   QUESTION BANKS
+   ========================================================= */
+
+// ---- Personality (MBTI-lite): each question maps an option to a dichotomy letter ----
+// dichotomies: E/I (energy), S/N (info), T/F (decisions), J/P (structure)
+const PERSONALITY_QUESTIONS = [
+  {
+    id:'p1', dichotomy:'EI',
+    q:'A group project just got assigned. What\'s your instinct?',
+    qcn:'小組作業剛剛分配下來，你的第一反應是？',
+    options:[
+      { text:'Immediately start talking it through with the group — ideas come from bouncing off people.', cn:'立即跟組員討論 — 想法是從互相交流中產生的。', sub:'Energized by people', subcn:'從與人交流中獲得能量', val:'E' },
+      { text:'Go quiet for a bit and think it through myself before saying anything.', cn:'先安靜一會，自己想清楚再發言。', sub:'Energized by solo focus', subcn:'從獨自專注中獲得能量', val:'I' },
+    ]
+  },
+  {
+    id:'p2', dichotomy:'EI',
+    q:'After a long week of school, what actually recharges you?',
+    qcn:'忙碌一周後，甚麼會真正令你放鬆？',
+    options:[
+      { text:'Hanging out with friends, even if we\'re just doing nothing together.', cn:'和朋友相聚，即使大家只是一起發呆。', sub:'', subcn:'', val:'E' },
+      { text:'Time alone — a book, a game, my room, no obligations to talk.', cn:'獨處時間 — 一本書、一個遊戲、在自己房間，不用跟任何人交談。', sub:'', subcn:'', val:'I' },
+    ]
+  },
+  {
+    id:'p3', dichotomy:'SN',
+    q:'When learning something new, you prefer...',
+    qcn:'學習新事物時，你比較喜歡...',
+    options:[
+      { text:'Clear steps, concrete examples, and a defined right answer.', cn:'清晰的步驟、具體的例子，以及明確的答案。', sub:'Practical, detail-first', subcn:'重視實際、注重細節', val:'S' },
+      { text:'Big-picture ideas and theories first — the details can come later.', cn:'先掌握大方向和理論，細節之後再說。', sub:'Conceptual, pattern-first', subcn:'重視概念、注重整體模式', val:'N' },
+    ]
+  },
+  {
+    id:'p4', dichotomy:'SN',
+    q:'Which sounds more like a satisfying afternoon?',
+    qcn:'哪個聽起來更像一個令你滿足的下午？',
+    options:[
+      { text:'Fixing something hands-on — a model, a recipe, a real object that now works.', cn:'親手修理或製作東西 — 模型、食譜，或令一件實物變得能用。', sub:'', subcn:'', val:'S' },
+      { text:'Going down a rabbit hole of "what if" questions about how the world works.', cn:'沉浸在「假如…會怎樣」的世界運作問題之中。', sub:'', subcn:'', val:'N' },
+    ]
+  },
+  {
+    id:'p5', dichotomy:'TF',
+    q:'A friend asks for feedback on something they made. You...',
+    qcn:'朋友請你給意見，你會...',
+    options:[
+      { text:'Give honest, specific feedback on what could be improved, even if it stings a bit.', cn:'坦誠地指出具體可改善的地方，即使聽起來有點刺耳。', sub:'Logic-led', subcn:'以邏輯為先', val:'T' },
+      { text:'Lead with encouragement and frame the feedback gently, thinking about how they\'ll feel.', cn:'先給予鼓勵，再溫和地表達意見，顧及對方的感受。', sub:'People-led', subcn:'以人為先', val:'F' },
+    ]
+  },
+  {
+    id:'p6', dichotomy:'TF',
+    q:'When your group disagrees on an approach, what matters more to you?',
+    qcn:'當小組對做法有分歧，你比較重視？',
+    options:[
+      { text:'Finding the objectively most efficient or correct approach.', cn:'找出客觀上最有效率或最正確的做法。', sub:'', subcn:'', val:'T' },
+      { text:'Making sure everyone feels heard and the group stays comfortable.', cn:'確保每個人的意見都被聆聽，小組氣氛舒服。', sub:'', subcn:'', val:'F' },
+    ]
+  },
+  {
+    id:'p7', dichotomy:'JP',
+    q:'How do you usually handle a big assignment with a deadline weeks away?',
+    qcn:'面對幾星期後到期的大型作業，你通常會？',
+    options:[
+      { text:'Make a plan early and chip away at it steadily.', cn:'提早訂立計劃，按部就班地完成。', sub:'Structured', subcn:'有規劃、按部就班', val:'J' },
+      { text:'Let it simmer, then do a big push closer to the deadline — works better under pressure.', cn:'先放一放，到截止日期前才集中衝刺 — 在壓力下反而做得更好。', sub:'Flexible', subcn:'靈活、隨機應變', val:'P' },
+    ]
+  },
+  {
+    id:'p8', dichotomy:'JP',
+    q:'Your ideal weekend schedule looks like...',
+    qcn:'你理想的周末安排是？',
+    options:[
+      { text:'Planned out — I like knowing what\'s happening and when.', cn:'有清晰安排 — 我喜歡預先知道甚麼時候會發生甚麼事。', sub:'', subcn:'', val:'J' },
+      { text:'Open-ended — I\'ll decide what to do based on how I feel that day.', cn:'隨心而行 — 視乎當天心情再決定做甚麼。', sub:'', subcn:'', val:'P' },
+    ]
+  },
+];
+
+// ---- Interest questions: multi-select, each option tags subjects ----
+const INTEREST_QUESTIONS = [
+  {
+    id:'i1',
+    q:'Which of these would you actually choose to spend a free afternoon on? (pick all that apply)',
+    qcn:'以下哪些是你會主動選擇的活動？（可多選）',
+    multi:true,
+    options:[
+      { text:'Tinkering with a circuit, robot kit, or coding a small project', cn:'擺弄電路、機械人套件，或編寫一個小程式', tags:{phy:1,ict:1.2} },
+      { text:'Watching a documentary about space, the brain, or how diseases spread', cn:'觀看關於太空、大腦，或疾病傳播的紀錄片', tags:{phy:0.8,bio:1.2,chem:0.5} },
+      { text:'Reading about a historical event or a different country\'s politics', cn:'閱讀歷史事件或其他國家的政治議題', tags:{hist:1.2,chist:0.8,geog:0.6} },
+      { text:'Following news about markets, a business, or a startup', cn:'追看市場、企業或初創公司的新聞', tags:{econ:1.2,bafs:1.2} },
+      { text:'Sketching, editing photos/videos, or making music', cn:'素描、剪輯相片／影片，或創作音樂', tags:{visarts:1.2,music:1.2} },
+      { text:'Planning a trip, looking at maps, or thinking about climate/environment', cn:'計劃旅行、看地圖，或思考氣候與環境議題', tags:{geog:1.3} },
+      { text:'Debating a moral or social issue with friends', cn:'跟朋友辯論道德或社會議題', tags:{hist:0.6,econ:0.5,chist:0.4} },
+      { text:'Reading novels, poetry, or writing your own stories', cn:'閱讀小說、詩歌，或寫自己的故事', tags:{litex:1.2,litcn:1.2} },
+      { text:'Playing or training seriously in a sport', cn:'認真打球或進行體育訓練', tags:{pe:1.3} },
+    ]
+  },
+  {
+    id:'i2',
+    q:'Pick the type of problem that sounds most satisfying to solve.',
+    qcn:'哪類問題你解決起來最有滿足感？',
+    multi:true,
+    options:[
+      { text:'A physics or maths puzzle with one correct answer', cn:'一道有明確答案的物理或數學難題', tags:{phy:1.2} },
+      { text:'A chemistry experiment where you predict and test a reaction', cn:'一個讓你預測並驗證化學反應的實驗', tags:{chem:1.3} },
+      { text:'Figuring out why a living system (body, ecosystem) works the way it does', cn:'弄清楚一個生命系統（身體、生態系統）為何如此運作', tags:{bio:1.3} },
+      { text:'Working out the most profitable or efficient way to run something', cn:'計算出經營某件事最賺錢或最有效率的方法', tags:{econ:1.1,bafs:1.2} },
+      { text:'Understanding why a historical decision happened the way it did', cn:'理解某個歷史決定為何會如此發生', tags:{hist:1.2,chist:1.0} },
+      { text:'Working out how to express an idea or feeling in a creative piece', cn:'想出如何透過創作表達一個想法或情感', tags:{visarts:1.1,music:1.1,litex:0.8,litcn:0.8} },
+      { text:'Debugging code or fixing a tech issue', cn:'除錯程式碼或修復技術問題', tags:{ict:1.3} },
+      { text:'Understanding how a place\'s geography shapes the people who live there', cn:'理解一個地方的地理環境如何影響當地居民', tags:{geog:1.3} },
+    ]
+  },
+  {
+    id:'i3',
+    q:'In group projects, what role do you naturally drift toward?',
+    qcn:'小組作業中，你通常會擔當甚麼角色？',
+    multi:false,
+    options:[
+      { text:'The one who organizes data, numbers, or the budget', cn:'負責整理數據、數字或預算的人', tags:{econ:1.0,bafs:1.1,phy:0.4} },
+      { text:'The one who researches background/context deeply', cn:'深入研究背景資料的人', tags:{hist:1.0,chist:0.8,geog:0.6,litex:0.5,litcn:0.5} },
+      { text:'The one who designs how it looks or sounds', cn:'負責設計外觀或聲音效果的人', tags:{visarts:1.1,music:1.0} },
+      { text:'The one who builds/tests the actual working model or experiment', cn:'負責製作／測試實際模型或實驗的人', tags:{phy:1.0,chem:1.0,bio:0.8,ict:0.8} },
+      { text:'The one who keeps the team on schedule and presents at the end', cn:'負責掌控進度及最後匯報的人', tags:{econ:0.5,bafs:0.5,geog:0.4} },
+    ]
+  },
+];
+
+/* =========================================================
+   SUBJECT <-> PERSONALITY AFFINITY (soft signal, lower weight)
+   Each subject lists which of the 8 dichotomy letters mildly aligns with it.
+   This is intentionally a SMALL contribution to the final score.
+   ========================================================= */
+const SUBJECT_PERSONALITY_AFFINITY = {
+  phy:    ['N','T'],
+  chem:   ['S','T'],
+  bio:    ['S','T','I'],
+  econ:   ['N','T','J'],
+  bafs:   ['S','T','J'],
+  geog:   ['N','S'],
+  hist:   ['N','I'],
+  chist:  ['S','I'],
+  ict:    ['N','T','I'],
+  visarts:['N','F','P'],
+  music:  ['N','F','P'],
+  pe:     ['E','S','P'],
+  litcn:  ['N','F','I'],
+  litex:  ['N','F','I'],
+};
+
+/* =========================================================
+   STATE
+   ========================================================= */
+let currentStep = 0;
+const TOTAL_STEPS = 5; // welcome, grades, personality, interest, results
+let state = {
+  grades:{},                 // { g_math:'A', ... }
+  customSubjects:[],         // [{ id:'custom_1', name:'BAFS', grade:'B' }, ...]
+  personality:{},            // { p1:'E', p2:'I', ... }
+  personalityCounts:{E:0,I:0,S:0,N:0,T:0,F:0,J:0,P:0},
+  interestSelections:{}      // { i1:[optIndex,...], i2:[...], i3:[idx] }
+};
+
+/* =========================================================
+   RENDER: progress rail
+   ========================================================= */
+const STEP_LABELS = ['Start · 開始','Grades · 成績','Mind · 思考','Interests · 興趣','Results · 結果'];
+function renderProgress(){
+  const rail = document.getElementById('progressRail');
+  rail.innerHTML = '';
+  STEP_LABELS.forEach((label, i)=>{
+    const dot = document.createElement('div');
+    dot.className = 'progress-dot' + (i===currentStep ? ' active' : (i<currentStep ? ' done':''));
+    dot.textContent = (i+1)+' · '+label;
+    rail.appendChild(dot);
+  });
+  document.getElementById('footStep').textContent = `Step ${currentStep+1} of ${TOTAL_STEPS}`;
+}
+
+/* =========================================================
+   RENDER: grade grid (step 1)
+   ========================================================= */
+function renderGradeGrid(){
+  const grid = document.getElementById('gradeGrid');
+  grid.innerHTML = '';
+  GRADE_INPUTS.forEach(g=>{
+    const row = document.createElement('div');
+    row.className = 'grade-row';
+    row.innerHTML = `
+      <div>
+        <label>${g.label}</label>
+        <div class="cn-label">${g.cn}</div>
+      </div>
+      <select class="grade-select" data-gid="${g.id}" aria-label="${g.label} / ${g.cn} grade">
+        <option value="">—</option>
+        ${GRADE_OPTIONS.map(opt=>`<option value="${opt}">${GRADE_OPTIONS_CN[opt]}</option>`).join('')}
+      </select>
+    `;
+    grid.appendChild(row);
+  });
+  // re-render any custom subject rows the student already added
+  state.customSubjects.forEach(cs=> renderCustomSubjectRow(cs));
+
+  attachGradeSelectListeners();
+}
+
+function attachGradeSelectListeners(){
+  const grid = document.getElementById('gradeGrid');
+  grid.querySelectorAll('select.grade-select[data-gid]').forEach(sel=>{
+    if(sel._bound) return;
+    sel._bound = true;
+    sel.addEventListener('change', e=>{
+      state.grades[e.target.dataset.gid] = e.target.value;
+      document.getElementById('gradeFlag').classList.remove('show');
+    });
+  });
+}
+
+// ---- Custom subject rows (free text + grade) ----
+function renderCustomSubjectRow(cs){
+  const grid = document.getElementById('gradeGrid');
+  const row = document.createElement('div');
+  row.className = 'grade-row';
+  row.dataset.customId = cs.id;
+  row.innerHTML = `
+    <div style="flex:1; padding-right:14px;">
+      <input type="text" class="custom-subject-input" data-cid="${cs.id}" placeholder="Type subject name · 輸入科目名稱"
+        value="${cs.name ? cs.name.replace(/"/g,'&quot;') : ''}"
+        style="font-family:var(--font-display); font-size:15px; font-weight:500; border:none; border-bottom:1.5px dashed var(--line); background:transparent; padding:4px 0; width:100%; outline:none;">
+    </div>
+    <div style="display:flex; align-items:center; gap:8px;">
+      <select class="grade-select custom-subject-grade" data-cid="${cs.id}" aria-label="Custom subject grade">
+        <option value="">—</option>
+        ${GRADE_OPTIONS.map(opt=>`<option value="${opt}" ${cs.grade===opt?'selected':''}>${GRADE_OPTIONS_CN[opt]}</option>`).join('')}
+      </select>
+      <button type="button" class="custom-subject-remove" data-cid="${cs.id}" aria-label="Remove subject"
+        style="border:none; background:none; color:var(--grey); cursor:pointer; font-size:18px; line-height:1; padding:0 2px;">×</button>
+    </div>
+  `;
+  grid.appendChild(row);
+
+  row.querySelector('.custom-subject-input').addEventListener('input', e=>{
+    cs.name = e.target.value;
+    document.getElementById('gradeFlag').classList.remove('show');
+  });
+  row.querySelector('.custom-subject-grade').addEventListener('change', e=>{
+    cs.grade = e.target.value;
+    document.getElementById('gradeFlag').classList.remove('show');
+  });
+  row.querySelector('.custom-subject-remove').addEventListener('click', ()=>{
+    state.customSubjects = state.customSubjects.filter(item=>item.id!==cs.id);
+    row.remove();
+  });
+}
+
+let customSubjectCounter = 0;
+function addCustomSubjectRow(){
+  customSubjectCounter++;
+  const cs = { id:'custom_'+customSubjectCounter, name:'', grade:'' };
+  state.customSubjects.push(cs);
+  renderCustomSubjectRow(cs);
+}
+
+/* =========================================================
+   RENDER: personality quiz (step 2)
+   ========================================================= */
+function renderPersonalityQuiz(){
+  const area = document.getElementById('personalityQuizArea');
+  area.innerHTML = '';
+  PERSONALITY_QUESTIONS.forEach((q, qi)=>{
+    const card = document.createElement('div');
+    card.className = 'quiz-card';
+    card.innerHTML = `
+      <div class="quiz-q"><span class="qnum">${String(qi+1).padStart(2,'0')}</span>${q.q}
+        <div style="font-size:13px;color:var(--grey);font-weight:400;margin-top:4px;">${q.qcn}</div>
+      </div>
+      <div class="option-list" data-qid="${q.id}">
+        ${q.options.map((opt,oi)=>`
+          <label class="option-item" data-val="${opt.val}">
+            <input type="radio" name="${q.id}" value="${opt.val}">
+            <div>
+              <div class="opt-text">${opt.text}</div>
+              <div class="opt-text" style="color:#3a3a4a; font-size:13.5px; margin-top:3px;">${opt.cn||''}</div>
+              ${opt.sub ? `<div class="opt-sub">${opt.sub}${opt.subcn ? ' · '+opt.subcn : ''}</div>`:''}
+            </div>
+          </label>
+        `).join('')}
+      </div>
+    `;
+    area.appendChild(card);
+  });
+
+  area.querySelectorAll('.option-item').forEach(item=>{
+    item.addEventListener('click', ()=>{
+      const list = item.closest('.option-list');
+      list.querySelectorAll('.option-item').forEach(i=>i.classList.remove('selected'));
+      item.classList.add('selected');
+      const qid = list.dataset.qid;
+      const val = item.dataset.val;
+      const qDef = PERSONALITY_QUESTIONS.find(q=>q.id===qid);
+      // remove previous count for this question if re-answering
+      if(state.personality[qid]){
+        state.personalityCounts[state.personality[qid]]--;
+      }
+      state.personality[qid] = val;
+      state.personalityCounts[val] = (state.personalityCounts[val]||0)+1;
+      document.getElementById('personalityFlag').classList.remove('show');
+    });
+  });
+}
+
+/* =========================================================
+   RENDER: interest quiz (step 3)
+   ========================================================= */
+function renderInterestQuiz(){
+  const area = document.getElementById('interestQuizArea');
+  area.innerHTML = '';
+  INTEREST_QUESTIONS.forEach((q, qi)=>{
+    const card = document.createElement('div');
+    card.className = 'quiz-card';
+    card.innerHTML = `
+      <div class="quiz-q"><span class="qnum">${String(qi+1).padStart(2,'0')}</span>${q.q}
+        <div style="font-size:13px;color:var(--grey);font-weight:400;margin-top:4px;">${q.qcn}</div>
+      </div>
+      <div class="option-list" data-qid="${q.id}" data-multi="${q.multi}">
+        ${q.options.map((opt,oi)=>`
+          <label class="option-item" data-idx="${oi}">
+            <input type="${q.multi?'checkbox':'radio'}" name="${q.id}${q.multi?'_'+oi:''}" value="${oi}">
+            <div>
+              <div class="opt-text">${opt.text}</div>
+              <div class="opt-text" style="color:#3a3a4a; font-size:13.5px; margin-top:3px;">${opt.cn||''}</div>
+            </div>
+          </label>
+        `).join('')}
+      </div>
+    `;
+    area.appendChild(card);
+  });
+
+  area.querySelectorAll('.option-list').forEach(list=>{
+    const qid = list.dataset.qid;
+    const isMulti = list.dataset.multi === 'true';
+    if(!state.interestSelections[qid]) state.interestSelections[qid] = [];
+
+    list.querySelectorAll('.option-item').forEach(item=>{
+      item.addEventListener('click', (e)=>{
+        const idx = parseInt(item.dataset.idx);
+        if(isMulti){
+          const arr = state.interestSelections[qid];
+          const pos = arr.indexOf(idx);
+          if(pos>-1){ arr.splice(pos,1); item.classList.remove('selected'); item.querySelector('input').checked=false; }
+          else { arr.push(idx); item.classList.add('selected'); item.querySelector('input').checked=true; }
+        } else {
+          state.interestSelections[qid] = [idx];
+          list.querySelectorAll('.option-item').forEach(i=>{ i.classList.remove('selected'); i.querySelector('input').checked=false; });
+          item.classList.add('selected');
+          item.querySelector('input').checked = true;
+        }
+        document.getElementById('interestFlag').classList.remove('show');
+      });
+    });
+  });
+}
+
+/* =========================================================
+   NAVIGATION
+   ========================================================= */
+function goToStep(n){
+  document.querySelectorAll('.step').forEach(s=>s.classList.remove('active'));
+  const target = document.querySelector(`.step[data-step="${n}"]`);
+  target.classList.add('active');
+  currentStep = n;
+  renderProgress();
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+
+function validateAndGo(fromStep, toStep){
+  if(fromStep === 1){
+    const allFilled = GRADE_INPUTS.every(g => state.grades[g.id]);
+    // custom rows: if a student started typing a name or picked a grade, require both;
+    // a fully-empty custom row (added then left blank) is ignored rather than blocking progress.
+    const customOk = state.customSubjects.every(cs=>{
+      const touched = (cs.name && cs.name.trim()) || cs.grade;
+      return !touched || (cs.name && cs.name.trim() && cs.grade);
+    });
+    if(!allFilled || !customOk){
+      document.getElementById('gradeFlag').classList.add('show');
+      return;
+    }
+  }
+  if(fromStep === 2){
+    const allAnswered = PERSONALITY_QUESTIONS.every(q => state.personality[q.id]);
+    if(!allAnswered){
+      document.getElementById('personalityFlag').classList.add('show');
+      return;
+    }
+  }
+  if(fromStep === 3){
+    const allAnswered = INTEREST_QUESTIONS.every(q => (state.interestSelections[q.id]||[]).length > 0);
+    if(!allAnswered){
+      document.getElementById('interestFlag').classList.add('show');
+      return;
+    }
+  }
+  if(toStep === 4){
+    computeResults();
+  }
+  goToStep(toStep);
+}
+
+function restartQuiz(){
+  customSubjectCounter = 0;
+  state = {
+    grades:{}, customSubjects:[], personality:{}, personalityCounts:{E:0,I:0,S:0,N:0,T:0,F:0,J:0,P:0}, interestSelections:{}
+  };
+  renderGradeGrid();
+  renderPersonalityQuiz();
+  renderInterestQuiz();
+  goToStep(0);
+}
+
+/* =========================================================
+   SCORING ENGINE
+   Weighting: Grades 45% · Interests 35% · Personality 20%
+   ========================================================= */
+function computeResults(){
+  // 1) Grade-derived score per subject (0-100)
+  let gradeScores = {};
+  SUBJECTS.forEach(s=> gradeScores[s.id] = []);
+  GRADE_INPUTS.forEach(g=>{
+    const gradeVal = state.grades[g.id];
+    const base = GRADE_SCORE[gradeVal] ?? 50;
+    Object.entries(g.feeds).forEach(([subjId, weight])=>{
+      gradeScores[subjId].push(base*weight);
+    });
+  });
+  // fold in any free-text custom subjects the student added, via keyword routing
+  state.customSubjects.forEach(cs=>{
+    if(!cs.name || !cs.name.trim() || !cs.grade) return;
+    const feeds = matchCustomSubjectFeeds(cs.name.trim());
+    if(!feeds) return; // unrecognized subject name: recorded but doesn't skew scoring
+    const base = GRADE_SCORE[cs.grade] ?? 50;
+    Object.entries(feeds).forEach(([subjId, weight])=>{
+      if(gradeScores[subjId]) gradeScores[subjId].push(base*weight);
+    });
+  });
+  let gradeFinal = {};
+  SUBJECTS.forEach(s=>{
+    const arr = gradeScores[s.id];
+    gradeFinal[s.id] = arr.length ? (arr.reduce((a,b)=>a+b,0)/arr.length) : 55; // neutral default
+  });
+
+  // 2) Interest-derived score per subject (0-100), normalized
+  let interestRaw = {};
+  SUBJECTS.forEach(s=> interestRaw[s.id]=0);
+  let maxPossible = {};
+  SUBJECTS.forEach(s=> maxPossible[s.id]=0.0001);
+
+  INTEREST_QUESTIONS.forEach(q=>{
+    const selectedIdxs = state.interestSelections[q.id]||[];
+    q.options.forEach((opt,oi)=>{
+      Object.entries(opt.tags).forEach(([subjId,w])=>{
+        maxPossible[subjId]+=w; // track ceiling for normalization
+      });
+    });
+    selectedIdxs.forEach(idx=>{
+      const opt = q.options[idx];
+      Object.entries(opt.tags).forEach(([subjId,w])=>{
+        interestRaw[subjId]+=w;
+      });
+    });
+  });
+  let interestFinal = {};
+  SUBJECTS.forEach(s=>{
+    const ratio = interestRaw[s.id]/maxPossible[s.id];
+    interestFinal[s.id] = Math.min(100, ratio*140); // scale up a bit so selections register meaningfully
+  });
+
+  // 3) Personality affinity score per subject (0-100) — SOFT signal
+  // Determine dominant letter per dichotomy
+  const c = state.personalityCounts;
+  const mbti = [
+    c.E >= c.I ? 'E':'I',
+    c.S >= c.N ? 'S':'N',
+    c.T >= c.F ? 'T':'F',
+    c.J >= c.P ? 'J':'P',
+  ].join('');
+
+  let personalityFinal = {};
+  SUBJECTS.forEach(s=>{
+    const affinityLetters = SUBJECT_PERSONALITY_AFFINITY[s.id]||[];
+    let matches = 0;
+    affinityLetters.forEach(letter=>{
+      if(mbti.includes(letter)) matches++;
+    });
+    // base 50 (neutral) + bonus per match, capped
+    personalityFinal[s.id] = Math.min(100, 50 + matches*16);
+  });
+
+  // 4) Weighted composite
+  const W_GRADE = 0.45, W_INTEREST = 0.35, W_PERSONALITY = 0.20;
+  let composite = {};
+  SUBJECTS.forEach(s=>{
+    composite[s.id] = (
+      gradeFinal[s.id]*W_GRADE +
+      interestFinal[s.id]*W_INTEREST +
+      personalityFinal[s.id]*W_PERSONALITY
+    );
+  });
+
+  renderResults({ gradeFinal, interestFinal, personalityFinal, composite, mbti });
+}
+
+/* =========================================================
+   MBTI BLURB BANK (light, descriptive — not deterministic)
+   ========================================================= */
+function mbtiDescription(mbti){
+  const traits = {
+    E:{en:"draws energy from people and discussion", cn:"從與人交流和討論中獲得能量"},
+    I:{en:"draws energy from quiet, focused reflection", cn:"從安靜、專注的思考中獲得能量"},
+    S:{en:"prefers concrete, step-by-step learning", cn:"偏好具體、按步驟的學習方式"},
+    N:{en:"prefers big-picture ideas and patterns", cn:"偏好宏觀概念及整體模式"},
+    T:{en:"leans on logic when making decisions", cn:"做決定時傾向依靠邏輯"},
+    F:{en:"leans on values and people's feelings when deciding", cn:"做決定時傾向考慮價值觀及他人感受"},
+    J:{en:"likes structure and planning ahead", cn:"喜歡有規劃、預先安排"},
+    P:{en:"likes flexibility and staying open-ended", cn:"喜歡靈活、保持開放"},
+  };
+  const en = mbti.split('').map(l=>traits[l].en).join('; ');
+  const cn = mbti.split('').map(l=>traits[l].cn).join('；');
+  return { en, cn };
+}
+
+/* =========================================================
+   RENDER RESULTS
+   ========================================================= */
+function renderResults({gradeFinal, interestFinal, personalityFinal, composite, mbti}){
+  // sort subjects by composite score desc
+  const ranked = [...SUBJECTS].sort((a,b)=> composite[b.id]-composite[a.id]);
+
+  // ---- Summary box ----
+  const top3 = ranked.slice(0,3).map(s=>s.name).join(', ');
+  const top3cn = ranked.slice(0,3).map(s=>s.cn).join('、');
+  const desc = mbtiDescription(mbti);
+  document.getElementById('resultStampDate').textContent = new Date().toLocaleDateString('en-HK',{year:'numeric',month:'short',day:'numeric'});
+  document.getElementById('resultsSummary').innerHTML = `
+    <div class="stamp">${new Date().toLocaleDateString('en-HK',{year:'numeric',month:'short',day:'numeric'})}</div>
+    <span class="mbti-pill">${mbti}</span>
+    <h2>Your top fits right now: ${top3}</h2>
+    <div style="font-family:var(--font-display); font-weight:600; font-size:15px; margin:-4px 0 10px 0;">你目前最適合的科目：${top3cn}</div>
+    <p>${desc.en}. Combined with your grades and what you picked as genuinely interesting, these are blended into the ranking below — your results and interests are weighted more heavily than the personality signal, by design.</p>
+    <p style="color:var(--grey); margin-top:8px;">${desc.cn}。結合你的成績及真正感興趣的事物，共同組成下方的排名 — 設計上，成績和興趣的比重高於性格參考。</p>
+  `;
+
+  // ---- Tile grid ----
+  const tileGrid = document.getElementById('tileGrid');
+  tileGrid.innerHTML = '';
+  ranked.forEach((s, i)=>{
+    const score = Math.round(composite[s.id]);
+    let verdictClass, verdictText;
+    if(score >= 72){ verdictClass='good'; verdictText='GOOD FIT 適合'; }
+    else if(score >= 55){ verdictClass='consider'; verdictText='WORTH A LOOK 留意'; }
+    else { verdictClass='skip'; verdictText='LESS LIKELY 較次要'; }
+
+    const gradePart = Math.round(gradeFinal[s.id]);
+    const interestPart = Math.round(interestFinal[s.id]);
+    const persPart = Math.round(personalityFinal[s.id]);
+
+    const tile = document.createElement('div');
+    tile.className = 'subject-tile';
+    tile.setAttribute('data-rank', '#'+(i+1));
+    tile.innerHTML = `
+      <div class="s-name">${s.name}</div>
+      <div class="s-name-cn">${s.cn}</div>
+      <div class="s-score-bar"><div class="s-score-fill" style="width:${score}%; background:${s.color};"></div></div>
+      <span class="verdict ${verdictClass}">${verdictText} · ${score}</span>
+      <div class="s-reason">Grades 成績 ${gradePart} · Interest 興趣 ${interestPart} · Personality 性格 ${persPart}</div>
+    `;
+    tileGrid.appendChild(tile);
+  });
+
+  // ---- Radar chart (top 8 subjects by composite, to keep it legible) ----
+  drawRadarChart(ranked.slice(0,8), composite);
+}
+
+/* =========================================================
+   RADAR CHART (pure SVG, no external libs)
+   ========================================================= */
+function drawRadarChart(subjectsToShow, composite){
+  const svg = document.getElementById('radarChart');
+  const size = 560;
+  const center = size/2;
+  const maxR = 145;
+  const n = subjectsToShow.length;
+  const levels = 4;
+
+  let svgContent = '';
+
+  // grid rings
+  for(let lvl=1; lvl<=levels; lvl++){
+    const r = (maxR/levels)*lvl;
+    let points = [];
+    for(let i=0;i<n;i++){
+      const angle = (Math.PI*2*i/n) - Math.PI/2;
+      points.push(`${center + r*Math.cos(angle)},${center + r*Math.sin(angle)}`);
+    }
+    svgContent += `<polygon points="${points.join(' ')}" fill="none" stroke="rgba(26,26,46,0.12)" stroke-width="1"/>`;
+  }
+
+  // spokes + labels
+  for(let i=0;i<n;i++){
+    const angle = (Math.PI*2*i/n) - Math.PI/2;
+    const x2 = center + maxR*Math.cos(angle);
+    const y2 = center + maxR*Math.sin(angle);
+    svgContent += `<line x1="${center}" y1="${center}" x2="${x2}" y2="${y2}" stroke="rgba(26,26,46,0.12)" stroke-width="1"/>`;
+
+    const labelR = maxR + 46;
+    const lx = center + labelR*Math.cos(angle);
+    const ly = center + labelR*Math.sin(angle);
+    const anchor = Math.cos(angle) > 0.3 ? 'start' : (Math.cos(angle) < -0.3 ? 'end' : 'middle');
+    svgContent += `<text x="${lx}" y="${ly}" font-family="JetBrains Mono, monospace" font-size="10.5" fill="#1A1A2E" text-anchor="${anchor}" dominant-baseline="middle">${subjectsToShow[i].name}</text>`;
+  }
+
+  // data polygon
+  let dataPoints = [];
+  subjectsToShow.forEach((s,i)=>{
+    const angle = (Math.PI*2*i/n) - Math.PI/2;
+    const value = Math.min(100, composite[s.id]);
+    const r = (value/100)*maxR;
+    dataPoints.push(`${center + r*Math.cos(angle)},${center + r*Math.sin(angle)}`);
+  });
+  svgContent += `<polygon points="${dataPoints.join(' ')}" fill="rgba(232,84,62,0.18)" stroke="#E8543E" stroke-width="2.5"/>`;
+
+  // data points
+  subjectsToShow.forEach((s,i)=>{
+    const angle = (Math.PI*2*i/n) - Math.PI/2;
+    const value = Math.min(100, composite[s.id]);
+    const r = (value/100)*maxR;
+    const px = center + r*Math.cos(angle);
+    const py = center + r*Math.sin(angle);
+    svgContent += `<circle cx="${px}" cy="${py}" r="4" fill="#E8543E"/>`;
+  });
+
+  svg.setAttribute('viewBox', `0 0 ${size} ${size}`);
+  svg.innerHTML = svgContent;
+
+  // legend
+  const legend = document.getElementById('radarLegend');
+  legend.innerHTML = `<span><span class="legend-dot" style="background:#E8543E;"></span>Your composite fit score (0–100) · 你的綜合適合度分數（0–100）</span>`;
+}
+
+/* =========================================================
+   INIT
+   ========================================================= */
+function init(){
+  document.getElementById('dateStamp').textContent = new Date().toLocaleDateString('en-HK',{year:'numeric',month:'short',day:'numeric'});
+  renderProgress();
+  renderGradeGrid();
+  renderPersonalityQuiz();
+  renderInterestQuiz();
+}
+init();
+</script>
+</body>
+</html>
